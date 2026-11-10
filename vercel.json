@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "mkdir -p public && cp referencia-brasa.webp espeto-fotos.webp logo.svg link-preview.png public/",
+  "outputDirectory": "public",
+  "functions": {
+    "api/menu.js": { "includeFiles": "index.html" }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/menu" },
+    { "source": "/index.html", "destination": "/api/menu" },
+    { "source": "/pedido", "destination": "/api/menu" }
+  ]
+}
