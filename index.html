@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Experimente o cardápio interativo de espetinhos Brasa da Vila.">
+<title>Brasa da Vila | Cardápio demo</title>
+<style>
+:root{color-scheme:dark;--bg:#15110e;--card:#211b17;--ink:#fff0df;--muted:#c6b3a3;--ember:#ff7b39;--line:#3b2d24}
+*{box-sizing:border-box}body{margin:0;background:#100d0b;color:var(--ink);font:16px/1.45 system-ui,sans-serif}button{font:inherit;font-weight:750;cursor:pointer;border:0;border-radius:13px}button:focus-visible{outline:3px solid white;outline-offset:3px}button:disabled{opacity:.45;cursor:default}
+main{max-width:650px;margin:auto;background:var(--bg);min-height:100dvh;padding-bottom:113px}.hero{position:relative;min-height:340px;display:flex;align-items:flex-end;overflow:hidden;padding:28px 24px;background:#2b1d14}.hero svg,.hero:after{position:absolute;inset:0;width:100%;height:100%}.hero:after{content:"";background:linear-gradient(0deg,#15110e 2%,#15110eaa 30%,transparent 82%)}.hero-copy{position:relative;z-index:1}.badge{display:inline-block;background:#39261c;border:1px solid #72472e;border-radius:99px;padding:5px 12px;color:#ffd0ae;font-size:.78rem;font-weight:750}
+h1,h2{font-family:Georgia,serif;line-height:1.03}h1{font-size:clamp(3rem,10vw,4.8rem);margin:12px 0 4px}h2{font-size:2rem;margin:0}p{margin:6px 0}.muted{color:var(--muted)}.menu{padding:14px 20px}.menu header{margin-bottom:17px}.items{display:grid;gap:10px}.item{display:flex;align-items:center;gap:13px;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:17px;min-height:90px}.item svg,.tile{width:76px;height:70px;border-radius:11px;flex:none}.tile{background-image:url(espeto-fotos.webp);background-size:300% 200%;background-color:#39261c}.phone-label{display:block;margin:16px 0 5px;font-weight:700}.phone-input{width:100%;min-height:48px;padding:10px 12px;border:1px solid #70503e;border-radius:12px;background:var(--card);color:var(--ink);font:inherit}.whatsapp{display:block;text-align:center;text-decoration:none;border-radius:13px;margin:14px 0 9px;font-weight:800;background:#36d579;color:#112319}.whatsapp[hidden]{display:none}.item div.details{flex:1}.item h3{margin:0;font-size:1.06rem}.price{display:block;color:#ffac82;font-weight:700;margin-top:3px}.add{width:44px;height:44px;font-size:1.5rem}.accent{background:var(--ember);color:#231209}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,650px);background:#15110ef5;border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom))}.bottom button,.wide{width:100%;min-height:49px;padding:11px 15px}.bottom button{display:flex;justify-content:space-between;align-items:center}
+dialog{width:min(calc(100% - 20px),610px);max-height:85dvh;overflow:auto;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:23px;margin:auto auto 10px}dialog::backdrop{background:#000a}.sheet-head,.line,.total,.step{display:flex;align-items:center;justify-content:space-between;gap:8px}.ghost,.step button{background:#382b23;color:var(--ink);padding:8px 12px;min-width:42px;min-height:42px}.line{padding:14px 0;border-bottom:1px solid var(--line)}.total{padding:18px 0;font-size:1.15rem}.note{font-size:.85rem;margin-top:12px}.status{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+</style>
+<main>
+  <section class="hero">
+    <svg viewBox="30 340 504 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="referencia-brasa.webp" width="1122" height="1402"/></svg>
+    <div class="hero-copy"><span class="badge">Demonstração</span><h1>Brasa da Vila</h1><p>Espetinhos na brasa</p></div>
+  </section>
+  <section class="menu" aria-labelledby="menu-title">
+    <header><h2 id="menu-title">Espetinhos</h2><p class="muted">Monte sua sacola para testar o pedido.</p></header>
+    <div id="items" class="items"></div>
+    <p class="muted note">Nome e preços fictícios. Imagens ilustrativas.</p>
+  </section>
+</main>
+<div class="bottom"><button class="accent" id="open"><span id="bag-label">Ver sacola</span><span id="bag-total">R$ 0,00</span></button></div>
+<div id="status" class="status" role="status"></div>
+<dialog id="bag" aria-labelledby="bag-title">
+  <div class="sheet-head"><h2 id="bag-title">Sua sacola</h2><button class="ghost" id="close" aria-label="Fechar sacola">×</button></div>
+  <div id="lines"></div>
+  <div class="total"><strong>Total</strong><strong id="total"></strong></div>
+  <button class="accent wide" id="simulate">Simular pedido</button>
+  <p class="muted note">Na próxima tela você pode testar a mensagem do pedido no WhatsApp. Nenhum valor será cobrado.</p>
+</dialog>
+<dialog id="done" aria-labelledby="done-title">
+  <h2 id="done-title">Pedido simulado!</h2>
+  <p id="summary"></p>
+  <form id="whatsapp-form">
+    <label class="phone-label" for="destination">WhatsApp que vai receber o teste</label>
+    <input class="phone-input" id="destination" type="tel" autocomplete="tel" inputmode="tel" maxlength="22" placeholder="(00) 90000-0000" required aria-describedby="phone-help">
+    <p class="muted note" id="phone-help">Use seu próprio número com DDD para testar. O pedido abre preenchido no WhatsApp, onde você decide se envia.</p>
+    <button class="accent wide" type="submit">Preparar mensagem no WhatsApp</button>
+  </form>
+  <a id="whatsapp-link" class="whatsapp wide" target="_blank" rel="noopener noreferrer" hidden>Abrir conversa com o pedido</a>
+  <button class="accent wide" id="back">Voltar ao cardápio</button>
+</dialog>
+<script>
+const products=[
+  {name:'Carne',price:1000,photo:'0% 0%'},
+  {name:'Frango',price:800,photo:'50% 0%'},
+  {name:'Panceta',price:1200,photo:'100% 0%'},
+  {name:'Linguiça',price:800,photo:'0% 100%'},
+  {name:'Tulipa',price:1100,photo:'50% 100%'},
+  {name:'Medalhão',price:1300,photo:'100% 100%'}
+];
+const counts=products.map(()=>0);
+const money=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const brl=cents=>money.format(cents/100);
+const get=id=>document.getElementById(id);
+const bag=get('bag');
+const done=get('done');
+const destination=get('destination');
+const whatsappLink=get('whatsapp-link');
+let orderMessage='';
+const total=()=>counts.reduce((sum,count,index)=>sum+count*products[index].price,0);
+const quantity=()=>counts.reduce((sum,count)=>sum+count,0);
+const itemsText=count=>count===1?'1 item':count+' itens';
+get('items').innerHTML=products.map((product,index)=>{
+  const art='<span class="tile" style="background-position:'+product.photo+'" aria-hidden="true"></span>';
+  return '<article class="item">'+art+'<div class="details"><h3>'+product.name+'</h3><span class="price">'+brl(product.price)+'</span></div><button class="accent add" data-add="'+index+'" aria-label="Adicionar '+product.name+'">+</button></article>';
+}).join('');
+function renderBag(focusIndex,delta){
+  get('bag-label').textContent=quantity()?'Ver sacola · '+itemsText(quantity()):'Ver sacola';
+  get('bag-total').textContent=brl(total());
+  get('total').textContent=brl(total());
+  get('simulate').disabled=!quantity();
+  get('lines').innerHTML=products.map((product,index)=>counts[index]?
+    '<div class="line"><div><strong>'+product.name+'</strong><div class="muted">'+brl(product.price*counts[index])+'</div></div><div class="step"><button data-index="'+index+'" data-delta="-1" aria-label="Remover '+product.name+'">−</button><span>'+counts[index]+'</span><button data-index="'+index+'" data-delta="1" aria-label="Adicionar '+product.name+'">+</button></div></div>':'').join('')||'<p class="muted">Sua sacola está vazia.</p>';
+  if(focusIndex!==undefined){
+    const target=get('lines').querySelector('[data-index="'+focusIndex+'"][data-delta="'+delta+'"]');
+    (target||get('close')).focus();
+  }
+}
+get('items').addEventListener('click',event=>{
+  const button=event.target.closest('[data-add]');
+  if(!button)return;
+  const index=Number(button.dataset.add);
+  counts[index]++;
+  renderBag();
+  get('status').textContent=products[index].name+' na sacola. '+itemsText(quantity())+'.';
+});
+get('lines').addEventListener('click',event=>{
+  const button=event.target.closest('[data-index]');
+  if(!button)return;
+  const index=Number(button.dataset.index),delta=Number(button.dataset.delta);
+  counts[index]+=delta;
+  renderBag(index,delta);
+});
+get('open').onclick=()=>bag.showModal();
+get('close').onclick=()=>bag.close();
+get('simulate').onclick=()=>{
+  get('summary').textContent=itemsText(quantity())+' · '+brl(total());
+  const lines=products.flatMap((product,index)=>counts[index]?
+    [counts[index]+'× '+product.name+' · '+brl(product.price*counts[index])]:[]);
+  orderMessage=['🔥 *Brasa da Vila | Pedido de teste*','',...lines,'','*Total ilustrativo: '+brl(total())+'*','Demonstração com preços fictícios.'].join('\n');
+  get('whatsapp-form').reset();
+  destination.setCustomValidity('');
+  whatsappLink.hidden=true;
+  whatsappLink.removeAttribute('href');
+  bag.close();
+  done.showModal();
+  counts.fill(0);
+  renderBag();
+};
+destination.addEventListener('input',()=>{
+  destination.setCustomValidity('');
+  whatsappLink.hidden=true;
+  whatsappLink.removeAttribute('href');
+});
+get('whatsapp-form').addEventListener('submit',event=>{
+  event.preventDefault();
+  const entered=destination.value.replace(/\D/g,'');
+  const number=entered.length<=11?'55'+entered:entered;
+  if(!/^55[1-9][0-9][2-9][0-9]{7,8}$/.test(number)){
+    destination.setCustomValidity('Informe um número brasileiro com DDD.');
+    destination.reportValidity();
+    return;
+  }
+  whatsappLink.href='https://wa.me/'+number+'?text='+encodeURIComponent(orderMessage);
+  whatsappLink.hidden=false;
+  whatsappLink.focus();
+});
+get('back').onclick=()=>done.close();
+renderBag();
+</script>
+</html>
